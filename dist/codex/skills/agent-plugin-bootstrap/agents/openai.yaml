@@ -1,0 +1,6 @@
+interface:
+  display_name: "Agent Plugin Bootstrap"
+  short_description: "Create a new production-ready AI-agent plugin with one shared core and Codex, Claude Code, and OpenCode distributions. Invoke explicitly when the user wants to bootstrap, scaffold, or standardize an agent plugin repository."
+  default_prompt: "Use $agent-plugin-bootstrap to create a new Codex, Claude Code, and OpenCode plugin repository."
+policy:
+  allow_implicit_invocation: false

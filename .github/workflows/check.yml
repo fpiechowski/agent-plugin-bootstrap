@@ -1,0 +1,20 @@
+name: Check
+on:
+  push:
+  pull_request:
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: python tooling/plugin.py check
+      - run: python tooling/plugin.py assemble --output build/ci-assembly
+      - run: node --check build/ci-assembly/publication/dist/opencode/.opencode/plugins/agent-plugin-bootstrap.js
+      - run: npm pack --dry-run
+        working-directory: dist/opencode

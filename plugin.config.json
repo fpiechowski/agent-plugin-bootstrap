@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "plugin": {
+    "name": "agent-plugin-bootstrap",
+    "displayName": "Agent Plugin Bootstrap",
+    "description": "Bootstrap production-ready AI-agent plugins from one shared core.",
+    "longDescription": "Generate a maintainable plugin repository with one canonical skill core, Codex and Claude Code marketplaces, OpenCode ZIP and npm distributions, deterministic assembly, validation, and release automation.",
+    "category": "Developer Tools",
+    "license": "MIT",
+    "repository": "https://github.com/fpiechowski/agent-plugin-bootstrap",
+    "homepage": "https://github.com/fpiechowski/agent-plugin-bootstrap",
+    "keywords": ["agents", "plugins", "codex", "claude-code", "opencode", "bootstrap"],
+    "author": {
+      "name": "Filip Piechowski",
+      "url": "https://github.com/fpiechowski"
+    },
+    "npm": {
+      "scope": "@fpiechowski",
+      "package": "@fpiechowski/agent-plugin-bootstrap",
+      "access": "public"
+    },
+    "brandColor": "#0F172A",
+    "skills": [
+      {
+        "name": "agent-plugin-bootstrap",
+        "displayName": "Agent Plugin Bootstrap",
+        "description": "Create a new production-ready AI-agent plugin with one shared core and Codex, Claude Code, and OpenCode distributions. Invoke explicitly when the user wants to bootstrap, scaffold, or standardize an agent plugin repository.",
+        "invocation": "explicit",
+        "defaultPrompt": "Use $agent-plugin-bootstrap to create a new Codex, Claude Code, and OpenCode plugin repository."
+      }
+    ]
+  },
+  "hosts": {
+    "codex": {
+      "implicitInvocation": false
+    },
+    "claudeCode": {
+      "implicitInvocation": false
+    },
+    "openCode": {
+      "minimumVersion": "1.15.0",
+      "implicitInvocation": false
+    }
+  }
+}

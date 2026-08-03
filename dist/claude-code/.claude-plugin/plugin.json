@@ -1,0 +1,21 @@
+{
+  "author": {
+    "name": "Filip Piechowski",
+    "url": "https://github.com/fpiechowski"
+  },
+  "description": "Bootstrap production-ready AI-agent plugins from one shared core.",
+  "homepage": "https://github.com/fpiechowski/agent-plugin-bootstrap",
+  "keywords": [
+    "agents",
+    "plugins",
+    "codex",
+    "claude-code",
+    "opencode",
+    "bootstrap"
+  ],
+  "license": "MIT",
+  "name": "agent-plugin-bootstrap",
+  "repository": "https://github.com/fpiechowski/agent-plugin-bootstrap",
+  "skills": "./skills/",
+  "version": "0.1.0"
+}

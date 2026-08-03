@@ -1,0 +1,30 @@
+{
+  "description": "Bootstrap production-ready AI-agent plugins from one shared core.",
+  "exports": "./.opencode/plugins/agent-plugin-bootstrap.js",
+  "files": [
+    ".opencode/commands/agent-plugin-bootstrap.md",
+    ".opencode/plugins/agent-plugin-bootstrap.js",
+    ".opencode/skills/agent-plugin-bootstrap/SKILL.md",
+    ".opencode/skills/agent-plugin-bootstrap/references/initialization-contract.md",
+    "README.md",
+    "VERSION",
+    "adapters/README.md",
+    "adapters/claude-code/plugin.json.tmpl",
+    "adapters/codex/assets/plugin-icon.svg",
+    "adapters/codex/openai.yaml.tmpl",
+    "adapters/codex/plugin.json.tmpl",
+    "adapters/opencode/package.json.tmpl",
+    "adapters/opencode/plugin.js.tmpl",
+    "install.ps1",
+    "install.sh",
+    "scripts/init_plugin.py",
+    "templates/README.md",
+    "templates/starter-skill.md.tmpl",
+    "tooling/plugin.py"
+  ],
+  "license": "MIT",
+  "name": "@fpiechowski/agent-plugin-bootstrap",
+  "private": false,
+  "type": "module",
+  "version": "0.1.0"
+}

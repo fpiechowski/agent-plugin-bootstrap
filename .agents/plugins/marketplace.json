@@ -1,0 +1,20 @@
+{
+  "interface": {
+    "displayName": "Agent Plugin Bootstrap"
+  },
+  "name": "agent-plugin-bootstrap",
+  "plugins": [
+    {
+      "category": "Developer Tools",
+      "name": "agent-plugin-bootstrap",
+      "policy": {
+        "authentication": "ON_INSTALL",
+        "installation": "AVAILABLE"
+      },
+      "source": {
+        "path": "./dist/codex",
+        "source": "local"
+      }
+    }
+  ]
+}

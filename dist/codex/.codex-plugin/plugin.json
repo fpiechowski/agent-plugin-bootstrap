@@ -1,0 +1,37 @@
+{
+  "author": {
+    "name": "Filip Piechowski",
+    "url": "https://github.com/fpiechowski"
+  },
+  "description": "Bootstrap production-ready AI-agent plugins from one shared core.",
+  "homepage": "https://github.com/fpiechowski/agent-plugin-bootstrap",
+  "interface": {
+    "brandColor": "#0F172A",
+    "capabilities": [
+      "Interactive"
+    ],
+    "category": "Developer Tools",
+    "composerIcon": "./assets/plugin-icon.svg",
+    "defaultPrompt": [
+      "Use $agent-plugin-bootstrap to create a new Codex, Claude Code, and OpenCode plugin repository."
+    ],
+    "developerName": "Filip Piechowski",
+    "displayName": "Agent Plugin Bootstrap",
+    "logo": "./assets/plugin-icon.svg",
+    "longDescription": "Generate a maintainable plugin repository with one canonical skill core, Codex and Claude Code marketplaces, OpenCode ZIP and npm distributions, deterministic assembly, validation, and release automation.",
+    "shortDescription": "Bootstrap production-ready AI-agent plugins from one shared core."
+  },
+  "keywords": [
+    "agents",
+    "plugins",
+    "codex",
+    "claude-code",
+    "opencode",
+    "bootstrap"
+  ],
+  "license": "MIT",
+  "name": "agent-plugin-bootstrap",
+  "repository": "https://github.com/fpiechowski/agent-plugin-bootstrap",
+  "skills": "./skills/",
+  "version": "0.1.0"
+}
