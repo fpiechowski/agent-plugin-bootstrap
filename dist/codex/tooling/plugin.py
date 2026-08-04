@@ -15,6 +15,7 @@ from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
+INSTALLER_DIR = Path("scripts/install")
 NAME_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 SEMVER_RE = re.compile(
     r"^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)"
@@ -363,13 +364,13 @@ python tooling/plugin.py package-release
 Codex (PowerShell):
 
 {fence}powershell
-irm https://raw.githubusercontent.com/{owner}/{repo}/master/install-codex.ps1 | iex
+irm https://raw.githubusercontent.com/{owner}/{repo}/master/scripts/install/install-codex.ps1 | iex
 {fence}
 
 Claude Code (PowerShell):
 
 {fence}powershell
-irm https://raw.githubusercontent.com/{owner}/{repo}/master/install-claude-code.ps1 | iex
+irm https://raw.githubusercontent.com/{owner}/{repo}/master/scripts/install/install-claude-code.ps1 | iex
 {fence}
 
 OpenCode npm:
@@ -381,7 +382,7 @@ opencode plugin {package} --global
 OpenCode Release ZIP:
 
 {fence}powershell
-irm https://raw.githubusercontent.com/{owner}/{repo}/master/install-opencode.ps1 | iex
+irm https://raw.githubusercontent.com/{owner}/{repo}/master/scripts/install/install-opencode.ps1 | iex
 {fence}
 
 Stable OpenCode release asset:
@@ -740,7 +741,7 @@ def sync_publication(root: Path = ROOT) -> None:
                 shutil.rmtree(target)
             shutil.copytree(publication / relative, target)
         for name, content in render_installers(load_config(root)).items():
-            write_text(root / name, content)
+            write_text(root / INSTALLER_DIR / name, content)
 
 
 def validate_committed_publication(root: Path = ROOT) -> None:
@@ -757,9 +758,9 @@ def validate_committed_publication(root: Path = ROOT) -> None:
                 raise ValidationError(f"committed {relative}/ is stale; run python tooling/plugin.py sync-publication")
         generated = render_installers(load_config(root))
         for relative, content in generated.items():
-            actual = root / relative
+            actual = root / INSTALLER_DIR / relative
             if not actual.is_file() or read_text(actual) != content.rstrip("\n") + "\n":
-                raise ValidationError(f"committed {relative} is stale; run python tooling/plugin.py sync-publication")
+                raise ValidationError(f"committed {INSTALLER_DIR / relative} is stale; run python tooling/plugin.py sync-publication")
 
 
 def write_release_zip(source: Path, target: Path) -> None:

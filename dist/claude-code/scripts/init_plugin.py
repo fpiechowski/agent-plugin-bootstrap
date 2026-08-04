@@ -236,7 +236,7 @@ distributions, marketplaces, and installers stay reproducible.
 - Claude Code: `/{name}:{name}`
 - OpenCode: `/{name}`
 
-Generated one-line installers are available at the repository root after publication sync.
+Generated one-line installers are available under `scripts/install/` after publication sync.
 """
 
 

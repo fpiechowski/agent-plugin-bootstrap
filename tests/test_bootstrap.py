@@ -45,6 +45,14 @@ class BootstrapTests(unittest.TestCase):
                 "--skill-description", "Run the test skill.",
             )
             self.command(*arguments)
+            installers = (
+                "install-codex.sh", "install-codex.ps1",
+                "install-claude-code.sh", "install-claude-code.ps1",
+                "install-opencode.sh", "install-opencode.ps1",
+            )
+            for installer in installers:
+                self.assertTrue((target / "scripts/install" / installer).is_file())
+                self.assertFalse((target / installer).exists())
             checked = subprocess.run(
                 [sys.executable, str(target / "tooling/plugin.py"), "check"],
                 cwd=target,

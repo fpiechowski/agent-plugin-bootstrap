@@ -18,6 +18,12 @@
     "install.ps1",
     "install.sh",
     "scripts/init_plugin.py",
+    "scripts/install/install-claude-code.ps1",
+    "scripts/install/install-claude-code.sh",
+    "scripts/install/install-codex.ps1",
+    "scripts/install/install-codex.sh",
+    "scripts/install/install-opencode.ps1",
+    "scripts/install/install-opencode.sh",
     "templates/README.md",
     "templates/starter-skill.md.tmpl",
     "tooling/plugin.py"
