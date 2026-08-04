@@ -16,13 +16,13 @@ python tooling/plugin.py package-release
 Codex (PowerShell):
 
 ```powershell
-irm https://raw.githubusercontent.com/fpiechowski/agent-plugin-bootstrap/master/install-codex.ps1 | iex
+irm https://raw.githubusercontent.com/fpiechowski/agent-plugin-bootstrap/master/scripts/install/install-codex.ps1 | iex
 ```
 
 Claude Code (PowerShell):
 
 ```powershell
-irm https://raw.githubusercontent.com/fpiechowski/agent-plugin-bootstrap/master/install-claude-code.ps1 | iex
+irm https://raw.githubusercontent.com/fpiechowski/agent-plugin-bootstrap/master/scripts/install/install-claude-code.ps1 | iex
 ```
 
 OpenCode npm:
@@ -34,7 +34,7 @@ opencode plugin @fpiechowski/agent-plugin-bootstrap --global
 OpenCode Release ZIP:
 
 ```powershell
-irm https://raw.githubusercontent.com/fpiechowski/agent-plugin-bootstrap/master/install-opencode.ps1 | iex
+irm https://raw.githubusercontent.com/fpiechowski/agent-plugin-bootstrap/master/scripts/install/install-opencode.ps1 | iex
 ```
 
 Stable OpenCode release asset:

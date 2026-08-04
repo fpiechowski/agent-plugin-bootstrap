@@ -37,7 +37,7 @@ python tooling/plugin.py package-release
 
 `VERSION` is the only version source. A `v<SemVer>` tag runs the release workflow, publishes GitHub Release ZIP assets and installers, and publishes the OpenCode npm package with provenance.
 
-The generated one-line installers are available from the repository's `master` branch for latest development and from `releases/latest/download/` for the newest stable release. Pinned release installers set `PLUGIN_RELEASE_TAG=v<SemVer>` before execution.
+The generated one-line installers are available under `scripts/install/` on the repository's `master` branch for latest development and from `releases/latest/download/` for the newest stable release. Pinned release installers set `PLUGIN_RELEASE_TAG=v<SemVer>` before execution.
 
 For example, install the latest stable OpenCode ZIP with:
 
