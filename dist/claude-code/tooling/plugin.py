@@ -730,6 +730,9 @@ def checked_output(raw: str, root: Path = ROOT) -> Path:
 
 
 def sync_publication(root: Path = ROOT) -> None:
+    config = load_config(root)
+    for name, content in render_installers(config).items():
+        write_text(root / INSTALLER_DIR / name, content)
     with tempfile.TemporaryDirectory(prefix="agent-plugin-assembly-") as temp:
         assembled = Path(temp)
         assemble(assembled, root)
@@ -740,8 +743,6 @@ def sync_publication(root: Path = ROOT) -> None:
             if target.exists():
                 shutil.rmtree(target)
             shutil.copytree(publication / relative, target)
-        for name, content in render_installers(load_config(root)).items():
-            write_text(root / INSTALLER_DIR / name, content)
 
 
 def validate_committed_publication(root: Path = ROOT) -> None:

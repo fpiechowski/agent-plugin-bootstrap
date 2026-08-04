@@ -91,6 +91,38 @@ class BootstrapTests(unittest.TestCase):
             self.assertIn('"description": "From flag"', result.stdout)
             self.assertIn('"name": "config-plugin"', result.stdout)
 
+    def test_sync_regenerates_installers_before_assembly(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            target = Path(temp) / "generated"
+            self.command(
+                "--target", str(target), "--name", "test-plugin", "--description", "A test plugin",
+                "--repository", "https://github.com/acme/test-plugin", "--author-name", "Acme",
+                "--npm-scope", "@acme", "--npm-package", "@acme/test-plugin", "--skill-name", "test",
+                "--skill-description", "Run the test skill.",
+            )
+            config_path = target / "plugin.config.json"
+            config = json.loads(config_path.read_text(encoding="utf-8"))
+            config["plugin"]["name"] = "renamed-plugin"
+            config["plugin"]["repository"] = "https://github.com/acme/renamed-plugin"
+            config["plugin"]["npm"]["package"] = "@acme/renamed-plugin"
+            config_path.write_text(json.dumps(config), encoding="utf-8")
+
+            subprocess.run(
+                [sys.executable, str(target / "tooling/plugin.py"), "sync-publication"],
+                cwd=target,
+                text=True,
+                capture_output=True,
+                check=True,
+            )
+            checked = subprocess.run(
+                [sys.executable, str(target / "tooling/plugin.py"), "check"],
+                cwd=target,
+                text=True,
+                capture_output=True,
+                check=True,
+            )
+            self.assertIn("deterministic assembly", checked.stdout)
+
 
 if __name__ == "__main__":
     unittest.main()
