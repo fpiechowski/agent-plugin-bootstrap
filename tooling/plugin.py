@@ -246,15 +246,6 @@ def open_code_contract(body: str, references: dict[str, str]) -> str:
     return body.rstrip() + ("\n\n# Loaded modules\n\n" + modules if modules else "") + "\n"
 
 
-def package_root_payload(root: Path, destination: Path) -> None:
-    if not (root / "scripts/init_plugin.py").is_file():
-        return
-    for relative in ("scripts", "tooling", "templates", "adapters"):
-        source = root / relative
-        if source.is_dir():
-            copy_tree(source, destination / relative)
-
-
 def component_root(root: Path, host: str) -> Path:
     return root / "adapters" / host / "components"
 
@@ -268,7 +259,8 @@ def read_optional_object(path: Path) -> dict[str, Any]:
 
 
 def codex_manifest(config: dict[str, Any], ver: str, root: Path) -> dict[str, Any]:
-    info = plugin_info(config); author = dict(info["author"])
+    info = plugin_info(config)
+    author = dict(info["author"])
     manifest: dict[str, Any] = {
         "name": info["name"], "version": ver, "description": info["description"],
         "author": author, "homepage": info.get("homepage", info["repository"]),
@@ -343,204 +335,15 @@ def package_json(config: dict[str, Any], ver: str, files: list[str]) -> dict[str
 
 
 def readme(config: dict[str, Any], ver: str) -> str:
-    info = plugin_info(config); owner, repo = github_repository(info["repository"])
-    fence = chr(96) * 3; package = info["npm"]["package"]
-    return f"""# {info["displayName"]}
-
-{info["longDescription"]}
-
-## Development
-
-{fence}text
-python tooling/plugin.py check
-python tooling/plugin.py assemble
-python tooling/plugin.py sync-publication
-python tooling/plugin.py package-release
-{fence}
-
-## Installation
-
-Codex (PowerShell):
-
-{fence}powershell
-irm https://raw.githubusercontent.com/{owner}/{repo}/master/install-codex.ps1 | iex
-{fence}
-
-Claude Code (PowerShell):
-
-{fence}powershell
-irm https://raw.githubusercontent.com/{owner}/{repo}/master/install-claude-code.ps1 | iex
-{fence}
-
-OpenCode npm:
-
-{fence}text
-opencode plugin {package} --global
-{fence}
-
-OpenCode Release ZIP:
-
-{fence}powershell
-irm https://raw.githubusercontent.com/{owner}/{repo}/master/install-opencode.ps1 | iex
-{fence}
-
-Stable OpenCode release asset:
-
-{fence}powershell
-irm https://github.com/{owner}/{repo}/releases/latest/download/install-opencode.ps1 | iex
-{fence}
-
-Pinned release:
-
-{fence}powershell
-$env:PLUGIN_RELEASE_TAG = "v{ver}"; irm https://github.com/{owner}/{repo}/releases/latest/download/install-opencode.ps1 | iex
-{fence}
-
-The release {ver} is reproducible with tag v{ver}. Review remote scripts before piping them into a shell.
-"""
-
-
-def marketplace_files(config: dict[str, Any], ver: str) -> tuple[dict[str, Any], dict[str, Any]]:
     info = plugin_info(config)
-    name = info["name"]
-    codex = {
-        "name": name,
-        "interface": {"displayName": info["displayName"]},
-        "plugins": [{
-            "name": name,
-            "source": {"source": "local", "path": "./dist/codex"},
-            "policy": {"installation": "AVAILABLE", "authentication": "ON_INSTALL"},
-            "category": info["category"],
-        }],
-    }
-    claude = {
-        "$schema": "https://json.schemastore.org/claude-code-marketplace.json",
-        "name": name,
-        "version": ver,
-        "description": f"{info['displayName']} plugin marketplace for Claude Code.",
-        "owner": {"name": info["author"]["name"]},
-        "plugins": [{
-            "name": name,
-            "description": info["description"],
-            "version": ver,
-            "source": "./dist/claude-code",
-        }],
-    }
-    return codex, claude
+    return f"""# {info['displayName']}
 
+{info['longDescription']}
 
-def render_installers(config: dict[str, Any], *, default_ref: str = "") -> dict[str, str]:
-    info = plugin_info(config)
-    owner, repo = github_repository(info["repository"])
-    name = info["name"]
-    source = f"{owner}/{repo}"
-    plugin_id = f"{name}@{name}"
-    codex_sh = f"""#!/usr/bin/env sh
-set -eu
-name="{name}"
-source="{source}"
-default_ref="{default_ref}"
-plugin_id="{plugin_id}"
-if ! command -v codex >/dev/null 2>&1; then echo "Codex CLI was not found on PATH." >&2; exit 1; fi
-if [ -n "${{PLUGIN_RELEASE_TAG:-}}" ]; then ref="${{PLUGIN_RELEASE_TAG}}"; elif [ -n "$default_ref" ]; then ref="$default_ref"; else ref="master"; fi
-marketplaces="$(codex plugin marketplace list --json 2>/dev/null || true)"
-if printf '%s\n' "$marketplaces" | grep -Eq '"name"[[:space:]]*:[[:space:]]*"{name}"'; then
-  codex plugin remove "$plugin_id" >/dev/null 2>&1 || true
-  codex plugin marketplace remove "$name" >/dev/null 2>&1 || true
-fi
-codex plugin marketplace add "$source" --ref "$ref"
-codex plugin add "$plugin_id"
-echo "{name} is installed from $ref. Start a new Codex conversation."
+This package is generated from the repository's canonical core and adapter sources.
+
+Version: {ver}
 """
-    codex_ps1 = f"""$ErrorActionPreference = "Stop"
-$name = "{name}"
-$source = "{source}"
-$defaultRef = "{default_ref}"
-$pluginId = "{plugin_id}"
-if (-not (Get-Command codex -ErrorAction SilentlyContinue)) {{ throw "Codex CLI was not found on PATH." }}
-if ($env:PLUGIN_RELEASE_TAG) {{ $refValue = $env:PLUGIN_RELEASE_TAG }} elseif ($defaultRef) {{ $refValue = $defaultRef }} else {{ $refValue = "master" }}
-$marketplacesJson = & codex plugin marketplace list --json 2>$null
-$marketplaces = if ($LASTEXITCODE -eq 0 -and $marketplacesJson) {{ $marketplacesJson | ConvertFrom-Json }} else {{ $null }}
-if ($marketplaces.marketplaces.name -contains $name) {{ & codex plugin remove $pluginId 2>$null; & codex plugin marketplace remove $name 2>$null }}
-& codex plugin marketplace add $source --ref $refValue
-if ($LASTEXITCODE -ne 0) {{ throw "Codex marketplace registration failed." }}
-& codex plugin add $pluginId
-if ($LASTEXITCODE -ne 0) {{ throw "Codex plugin installation failed." }}
-Write-Host "{name} is installed from $refValue. Start a new Codex conversation."
-"""
-    claude_sh = f"""#!/usr/bin/env sh
-set -eu
-name="{name}"
-source="{source}"
-default_ref="{default_ref}"
-plugin_id="{plugin_id}"
-if ! command -v claude >/dev/null 2>&1; then echo "Claude Code CLI was not found on PATH." >&2; exit 1; fi
-if [ -n "${{PLUGIN_RELEASE_TAG:-}}" ]; then ref="${{PLUGIN_RELEASE_TAG}}"; elif [ -n "$default_ref" ]; then ref="$default_ref"; else ref="master"; fi
-marketplaces="$(claude plugin marketplace list --json 2>/dev/null || true)"
-if printf '%s\n' "$marketplaces" | grep -Eq '"name"[[:space:]]*:[[:space:]]*"{name}"'; then
-  claude plugin uninstall --scope user "$plugin_id" >/dev/null 2>&1 || true
-  claude plugin marketplace remove "$name" >/dev/null 2>&1 || true
-fi
-claude plugin marketplace add --scope user "$source@$ref"
-claude plugin install --scope user "$plugin_id"
-echo "{name} is installed from $ref. Restart Claude Code or run /reload-plugins."
-"""
-    claude_ps1 = f"""$ErrorActionPreference = "Stop"
-$name = "{name}"
-$source = "{source}"
-$defaultRef = "{default_ref}"
-$pluginId = "{plugin_id}"
-if (-not (Get-Command claude -ErrorAction SilentlyContinue)) {{ throw "Claude Code CLI was not found on PATH." }}
-if ($env:PLUGIN_RELEASE_TAG) {{ $refValue = $env:PLUGIN_RELEASE_TAG }} elseif ($defaultRef) {{ $refValue = $defaultRef }} else {{ $refValue = "master" }}
-$marketplacesJson = & claude plugin marketplace list --json 2>$null
-$marketplaces = if ($LASTEXITCODE -eq 0 -and $marketplacesJson) {{ $marketplacesJson | ConvertFrom-Json }} else {{ $null }}
-if ($marketplaces.name -contains $name) {{ & claude plugin uninstall --scope user $pluginId 2>$null; & claude plugin marketplace remove $name 2>$null }}
-& claude plugin marketplace add --scope user "$source@$refValue"
-if ($LASTEXITCODE -ne 0) {{ throw "Claude Code marketplace registration failed." }}
-& claude plugin install --scope user $pluginId
-if ($LASTEXITCODE -ne 0) {{ throw "Claude Code plugin installation failed." }}
-Write-Host "{name} is installed from $refValue. Restart Claude Code or run /reload-plugins."
-"""
-    asset = f"{name}-opencode.zip"
-    opencode_sh = f"""#!/usr/bin/env sh
-set -eu
-scope="global"
-project_path="$(pwd)"
-if [ "$#" -ge 1 ]; then scope="$1"; fi
-if [ "$#" -ge 2 ]; then project_path="$2"; fi
-default_ref="{default_ref}"
-if [ -n "${{PLUGIN_RELEASE_TAG:-}}" ]; then ref="${{PLUGIN_RELEASE_TAG}}"; elif [ -n "$default_ref" ]; then ref="$default_ref"; else ref=""; fi
-tmpdir="/tmp"
-if [ -n "${{TMPDIR:-}}" ]; then tmpdir="$TMPDIR"; fi
-tmp="$tmpdir/{name}-$$"
-mkdir -p "$tmp"
-trap 'rm -rf "$tmp"' EXIT INT TERM
-archive="$tmp/{asset}"
-if [ -n "$ref" ]; then url="https://github.com/{owner}/{repo}/releases/download/$ref/{asset}"; else url="https://github.com/{owner}/{repo}/releases/latest/download/{asset}"; fi
-if command -v curl >/dev/null 2>&1; then curl -fsSL "$url" -o "$archive"; else wget -q "$url" -O "$archive"; fi
-command -v unzip >/dev/null 2>&1 || {{ echo "unzip is required." >&2; exit 1; }}
-unzip -q "$archive" -d "$tmp/dist"
-sh "$tmp/dist/install.sh" "$scope" "$project_path"
-"""
-    opencode_ps1 = f"""param([ValidateSet("Global", "Project")][string]$Scope = "Global", [string]$ProjectPath = (Get-Location).Path)
-$ErrorActionPreference = "Stop"
-$ProgressPreference = "SilentlyContinue"
-$defaultRef = "{default_ref}"
-if ($env:PLUGIN_RELEASE_TAG) {{ $refValue = $env:PLUGIN_RELEASE_TAG }} elseif ($defaultRef) {{ $refValue = $defaultRef }} else {{ $refValue = "" }}
-$tmp = Join-Path ([IO.Path]::GetTempPath()) "{name}-$([Guid]::NewGuid().ToString('N'))"
-$archive = Join-Path $tmp "{asset}"
-$extract = Join-Path $tmp "dist"
-if ($refValue) {{ $url = "https://github.com/{owner}/{repo}/releases/download/$refValue/{asset}" }} else {{ $url = "https://github.com/{owner}/{repo}/releases/latest/download/{asset}" }}
-try {{ New-Item -ItemType Directory -Path $tmp | Out-Null; Invoke-WebRequest $url -OutFile $archive -UseBasicParsing; Expand-Archive -LiteralPath $archive -DestinationPath $extract; & (Join-Path $extract "install.ps1") -Scope $Scope -ProjectPath $ProjectPath }} finally {{ if (Test-Path $tmp) {{ [IO.Directory]::Delete($tmp, $true) }} }}
-"""
-    return {
-        "install-codex.sh": codex_sh,
-        "install-codex.ps1": codex_ps1,
-        "install-claude-code.sh": claude_sh,
-        "install-claude-code.ps1": claude_ps1,
-        "install-opencode.sh": opencode_sh,
-        "install-opencode.ps1": opencode_ps1,
-    }
 
 
 def write_opencode_installer(destination: Path, config: dict[str, Any], ver: str) -> None:
@@ -550,7 +353,7 @@ $ErrorActionPreference = "Stop"
 $sourceRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
 if ($Scope -eq "Global") {{ $configRoot = Join-Path $HOME ".config\\opencode" }} else {{ $configRoot = Join-Path (Resolve-Path $ProjectPath) ".opencode" }}
 New-Item -ItemType Directory -Force -Path $configRoot | Out-Null
-foreach ($folder in @("skills", "commands", "plugins")) {{ $source = Join-Path $sourceRoot ".opencode\\$folder"; $destination = Join-Path $configRoot $folder; if (Test-Path $source) {{ New-Item -ItemType Directory -Force -Path $destination | Out-Null; Get-ChildItem -Force $source | Copy-Item -Destination $destination -Recurse -Force }} }}
+foreach ($folder in @('skills', 'commands', 'plugins')) {{ $source = Join-Path $sourceRoot ".opencode\\$folder"; $destination = Join-Path $configRoot $folder; if (Test-Path $source) {{ New-Item -ItemType Directory -Force -Path $destination | Out-Null; Get-ChildItem -Force $source | Copy-Item -Destination $destination -Recurse -Force }} }}
 Write-Host "Installed {name} {ver} for OpenCode at $configRoot"
 """
     sh = f"""#!/usr/bin/env sh
@@ -572,6 +375,37 @@ echo "Installed {name} {ver} for OpenCode at $config_root"
 """
     write_text(destination / "install.ps1", ps1)
     write_text(destination / "install.sh", sh)
+
+
+def render_release_installers(config: dict[str, Any], *, default_ref: str) -> dict[str, str]:
+    owner, repo = github_repository(plugin_info(config)["repository"])
+    name = plugin_info(config)["name"]
+    asset = f"{name}-opencode.zip"
+    sh = f"""#!/usr/bin/env sh
+set -eu
+scope="global"; project_path="$(pwd)"
+if [ "$#" -ge 1 ]; then scope="$1"; fi
+if [ "$#" -ge 2 ]; then project_path="$2"; fi
+ref="{default_ref}"
+tmp="$(mktemp -d)"
+trap 'rm -rf "$tmp"' EXIT INT TERM
+archive="$tmp/{asset}"
+url="https://github.com/{owner}/{repo}/releases/download/$ref/{asset}"
+if command -v curl >/dev/null 2>&1; then curl -fsSL "$url" -o "$archive"; else wget -q "$url" -O "$archive"; fi
+command -v unzip >/dev/null 2>&1 || {{ echo "unzip is required." >&2; exit 1; }}
+unzip -q "$archive" -d "$tmp/dist"
+sh "$tmp/dist/install.sh" "$scope" "$project_path"
+"""
+    ps1 = f"""param([ValidateSet("Global", "Project")][string]$Scope = "Global", [string]$ProjectPath = (Get-Location).Path)
+$ErrorActionPreference = "Stop"
+$ProgressPreference = "SilentlyContinue"
+$tmp = Join-Path ([IO.Path]::GetTempPath()) "{name}-$([Guid]::NewGuid().ToString('N'))"
+$archive = Join-Path $tmp "{asset}"
+$extract = Join-Path $tmp "dist"
+$url = "https://github.com/{owner}/{repo}/releases/download/{default_ref}/{asset}"
+try {{ New-Item -ItemType Directory -Path $tmp | Out-Null; Invoke-WebRequest $url -OutFile $archive -UseBasicParsing; Expand-Archive -LiteralPath $archive -DestinationPath $extract; & (Join-Path $extract "install.ps1") -Scope $Scope -ProjectPath $ProjectPath }} finally {{ if (Test-Path $tmp) {{ [IO.Directory]::Delete($tmp, $true) }} }}
+"""
+    return {"install-opencode.sh": sh, "install-opencode.ps1": ps1}
 
 
 def assemble(output: Path, root: Path = ROOT) -> None:
@@ -628,14 +462,8 @@ def assemble(output: Path, root: Path = ROOT) -> None:
     write_text(open_dist / "README.md", readme(config, ver))
     write_text(open_dist / "VERSION", ver)
     write_opencode_installer(open_dist, config, ver)
-    package_root_payload(root, codex_dist)
-    package_root_payload(root, claude_dist)
-    package_root_payload(root, open_dist)
     package_files = [p.relative_to(open_dist).as_posix() for p in open_dist.rglob("*") if p.is_file()]
     write_json(open_dist / "package.json", package_json(config, ver, package_files))
-    codex_marketplace, claude_marketplace = marketplace_files(config, ver)
-    write_json(publication / ".agents/plugins/marketplace.json", codex_marketplace)
-    write_json(publication / ".claude-plugin/marketplace.json", claude_marketplace)
     write_json(output / "integrity.json", integrity)
 
 
@@ -647,13 +475,10 @@ def validate_package_no_external_paths(package: Path) -> None:
     for path in package.rglob("*"):
         if not path.is_file() or path.suffix.lower() in {".png", ".jpg", ".jpeg", ".gif", ".svg"}:
             continue
-        relative_parts = set(path.relative_to(package).parts)
-        if relative_parts & {"tooling", "scripts", "templates", "adapters"}:
-            continue
         content = read_text(path)
         if "](" + "../" in content or "](" + "..\\" in content:
             raise ValidationError(f"{path}: published artifact contains an external relative path")
-        if re.search(r"\{\{\s*[A-Za-z_]", content) or "${" in content:
+        if re.search(r"\{\{\s*[A-Za-z_]", content):
             raise ValidationError(f"{path}: published artifact contains an unresolved template token")
 
 
@@ -665,9 +490,11 @@ def validate_assembly(output: Path, root: Path = ROOT) -> None:
     codex = publication / "dist/codex"
     claude = publication / "dist/claude-code"
     open_dist = publication / "dist/opencode"
-    for path in (codex, claude, open_dist, publication / ".agents/plugins/marketplace.json", publication / ".claude-plugin/marketplace.json"):
+    for path in (codex, claude, open_dist):
         if not path.exists():
             raise ValidationError(f"missing generated artifact: {path}")
+    if (publication / ".agents").exists() or (publication / ".claude-plugin").exists():
+        raise ValidationError("marketplace files must not be generated")
     codex_manifest = read_json(codex / ".codex-plugin/plugin.json")
     claude_manifest = read_json(claude / ".claude-plugin/plugin.json")
     for manifest, label in ((codex_manifest, "Codex"), (claude_manifest, "Claude Code")):
@@ -698,12 +525,6 @@ def validate_assembly(output: Path, root: Path = ROOT) -> None:
         raise ValidationError("OpenCode package export is invalid")
     for package in (codex, claude, open_dist):
         validate_package_no_external_paths(package)
-    codex_marketplace = read_json(publication / ".agents/plugins/marketplace.json")
-    if codex_marketplace.get("plugins", [{}])[0].get("source", {}).get("path") != "./dist/codex":
-        raise ValidationError("Codex marketplace source is invalid")
-    claude_marketplace = read_json(publication / ".claude-plugin/marketplace.json")
-    if claude_marketplace.get("plugins", [{}])[0].get("source") != "./dist/claude-code":
-        raise ValidationError("Claude marketplace source is invalid")
     integrity = read_json(output / "integrity.json")
     if integrity.get("version") != ver or set(integrity.get("skills", {})) != {skill["name"] for skill in info["skills"]}:
         raise ValidationError("integrity metadata is incomplete")
@@ -717,7 +538,7 @@ def checked_output(raw: str, root: Path = ROOT) -> Path:
         raise ValidationError("output must remain inside the repository") from exc
     if path == root.resolve():
         raise ValidationError("output cannot be the repository root")
-    protected = (".git", "core", "adapters", "tooling", "scripts", "dist", ".agents", ".claude-plugin")
+    protected = (".git", "core", "adapters", "tooling", "dist")
     for relative in protected:
         protected_path = (root / relative).resolve()
         try:
@@ -733,33 +554,22 @@ def sync_publication(root: Path = ROOT) -> None:
         assembled = Path(temp)
         assemble(assembled, root)
         validate_assembly(assembled, root)
-        publication = assembled / "publication"
-        for relative in (".agents", ".claude-plugin", "dist"):
-            target = root / relative
-            if target.exists():
-                shutil.rmtree(target)
-            shutil.copytree(publication / relative, target)
-        for name, content in render_installers(load_config(root)).items():
-            write_text(root / name, content)
+        target = root / "dist"
+        if target.exists():
+            shutil.rmtree(target)
+        shutil.copytree(assembled / "publication/dist", target)
 
 
 def validate_committed_publication(root: Path = ROOT) -> None:
-    """Ensure checked-in distributions and publication files match the assembler output."""
+    """Ensure checked-in distributions match the assembler output."""
     with tempfile.TemporaryDirectory(prefix="agent-plugin-publication-check-") as temp:
         assembled = Path(temp)
         assemble(assembled, root)
         validate_assembly(assembled, root)
-        expected = assembled / "publication"
-        for relative in (".agents", ".claude-plugin", "dist"):
-            actual_path = root / relative
-            expected_path = expected / relative
-            if not actual_path.is_dir() or tree_snapshot(actual_path) != tree_snapshot(expected_path):
-                raise ValidationError(f"committed {relative}/ is stale; run python tooling/plugin.py sync-publication")
-        generated = render_installers(load_config(root))
-        for relative, content in generated.items():
-            actual = root / relative
-            if not actual.is_file() or read_text(actual) != content.rstrip("\n") + "\n":
-                raise ValidationError(f"committed {relative} is stale; run python tooling/plugin.py sync-publication")
+        expected = assembled / "publication/dist"
+        actual_path = root / "dist"
+        if not actual_path.is_dir() or tree_snapshot(actual_path) != tree_snapshot(expected):
+            raise ValidationError("committed dist/ is stale; run python tooling/plugin.py sync-publication")
 
 
 def write_release_zip(source: Path, target: Path) -> None:
@@ -791,7 +601,7 @@ def package_release(root: Path = ROOT, output: Path | None = None) -> Path:
         write_release_zip(source, archive)
         shutil.copy2(archive, versioned)
         write_text(output / f"{archive.name}.sha256", f"{sha256_bytes(archive.read_bytes())}  {archive.name}")
-        for filename, content in render_installers(config, default_ref=f"v{ver}").items():
+        for filename, content in render_release_installers(config, default_ref=f"v{ver}").items():
             write_text(output / filename, content)
     return output
 
@@ -818,7 +628,7 @@ def command_check(_: argparse.Namespace) -> None:
 
 def command_sync(_: argparse.Namespace) -> None:
     sync_publication()
-    print("Synchronized publication surfaces and installers")
+    print("Synchronized generated distributions")
 
 
 def command_release(args: argparse.Namespace) -> None:

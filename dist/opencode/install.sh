@@ -13,4 +13,4 @@ mkdir -p "$config_root"
 for folder in skills commands plugins; do
   if [ -d "$source_root/.opencode/$folder" ]; then mkdir -p "$config_root/$folder"; cp -R "$source_root/.opencode/$folder"/. "$config_root/$folder"/; fi
 done
-echo "Installed agent-plugin-bootstrap 0.1.0 for OpenCode at $config_root"
+echo "Installed my-plugin 0.1.0 for OpenCode at $config_root"

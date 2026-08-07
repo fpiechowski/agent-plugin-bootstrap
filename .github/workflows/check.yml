@@ -15,6 +15,6 @@ jobs:
           node-version: '20'
       - run: python tooling/plugin.py check
       - run: python tooling/plugin.py assemble --output build/ci-assembly
-      - run: node --check build/ci-assembly/publication/dist/opencode/.opencode/plugins/agent-plugin-bootstrap.js
+      - run: node --check build/ci-assembly/publication/dist/opencode/.opencode/plugins/*.js
       - run: npm pack --dry-run
         working-directory: dist/opencode

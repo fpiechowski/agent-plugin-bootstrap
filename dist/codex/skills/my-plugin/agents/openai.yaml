@@ -1,0 +1,6 @@
+interface:
+  display_name: "My Plugin"
+  short_description: "A minimal example skill for a cross-host agent plugin."
+  default_prompt: "Use $my-plugin for this task."
+policy:
+  allow_implicit_invocation: false
